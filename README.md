@@ -68,10 +68,53 @@ myNN.trainUsingSGD(X, y, 1000)
 print myNN.predict(X)
 ```
 
+## Requirements for interactive tutorial (myPyNN.ipynb)
+
+I ran this in OS X, after installing brew for command-line use, and pip for python-related stuff.
+
+### Python
+
+I designed the tutorial on Python 2.7.
+
+
+### Jupyter
+
+The tutorial is an iPython notebook. It is designed and meant to run in Jupyter. To install Jupyter, one can install Anaconda which would install Python, Jupyter, along with a lot of other stuff. Or, one can install only Jupyter using:
+```
+pip install jupyter
+```
+
+### ipywidgets
+
+ipywidgets comes pre-installed with Jupyter. However, widgets might need to be actived using:
+```
+jupyter nbextension enable --py widgetsnbextension
+```
+
 ## References
 - [Machine Learning Mastery's excellent tutorial](https://machinelearningmastery.com/implement-backpropagation-algorithm-scratch-python/)
 
 - [Mattmazur's example](https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/)
 
 - [Welch Lab's excellent video playlist on neural networks](https://www.youtube.com/playlist?list=PLiaHhY2iBX9hdHaRr6b7XevZtgZRa1PoU)
+
+- [Michael Nielsen's brilliant hands-on interactive tutorial on the awesome power of neural networks as universal approximators](https://neuralnetworksanddeeplearning.com/chap4.html)
+
+- [CS321n's iPython tutorial](https://cs231n.github.io/ipython-tutorial/)
+
+- [Karlijn Willem's definitive Jupyter guide](https://www.datacamp.com/community/tutorials/tutorial-jupyter-notebook#gs.SJPul58)
+
+- [matplotlib](https://matplotlib.org/)
+
+- [Tutorial on using Matplotlib in Jupyter](https://nbviewer.jupyter.org/github/jrjohansson/scientific-python-lectures/blob/master/Lecture-4-Matplotlib.ipynb)
+
+- [Interactive dashboards in Jupyter](https://blog.dominodatalab.com/interactive-dashboards-in-jupyter/)
+
+- [ipywidgets - for interactive dashboards in Jupyter](http://ipywidgets.readthedocs.io/)
+
+- [drawing-animating-shapes-matplotlib](https://nickcharlton.net/posts/drawing-animating-shapes-matplotlib.html)
+
+- [Mathematical notations for LaTeX, which can also be used in Jupyter](https://en.wikibooks.org/wiki/LaTeX/Mathematics)
+
+- Fernando Pérez, Brian E. Granger, IPython: A System for Interactive Scientific Computing, Computing in Science and Engineering, vol. 9, no. 3, pp. 21-29, May/June 2007, doi:10.1109/MCSE.2007.53. URL: (http://ipython.org)
 
