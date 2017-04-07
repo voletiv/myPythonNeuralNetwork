@@ -89,6 +89,7 @@ pip install jupyter
 ipywidgets comes pre-installed with Jupyter. However, widgets might need to be actived using:
 ```
 jupyter nbextension enable --py widgetsnbextension
+jupyter nbextension enable --py --sys-prefix widgetsnbextension
 ```
 
 ## References
@@ -114,7 +115,11 @@ jupyter nbextension enable --py widgetsnbextension
 
 - [drawing-animating-shapes-matplotlib](https://nickcharlton.net/posts/drawing-animating-shapes-matplotlib.html)
 
+- [matplotlib examples from SciPy](http://scipython.com/book/chapter-7-matplotlib/examples/simple-surface-plots/)
+
 - [Mathematical notations for LaTeX, which can also be used in Jupyter](https://en.wikibooks.org/wiki/LaTeX/Mathematics)
+
+- [Optional code visibility in iPython notebooks](http://chris-said.io/2016/02/13/how-to-make-polished-jupyter-presentations-with-optional-code-visibility/)
 
 - Fernando Pérez, Brian E. Granger, IPython: A System for Interactive Scientific Computing, Computing in Science and Engineering, vol. 9, no. 3, pp. 21-29, May/June 2007, doi:10.1109/MCSE.2007.53. URL: (http://ipython.org)
 
