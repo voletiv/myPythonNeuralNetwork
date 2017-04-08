@@ -43,20 +43,24 @@ class MyPyNN(object):
         
         return inputs
 
-    def trainUsingGD(self, X, y, nIterations=1000, alpha=0.05, regLambda=0, showOutputs=False):
+    def trainUsingGD(self, X, y, nIterations=1000, alpha=0.05, \
+                        regLambda=0, visible=False):
         self.alpha = alpha
         self.regLambda = regLambda
+        self.visible = visible
         for i in range(nIterations):
             print i
             self.forwardProp(X)
             self.backPropGradDescent(X, y)
             yPred = self.predict(X)
-            print "accuracy = " + str((np.sum([np.all((yPred[i]>0.5)==y[i]) for i in range(len(y))])).astype(float)/len(y))
+            print "accuracy = " + str((np.sum([np.all((yPred[i]>0.5)==y[i]) \
+                                        for i in range(len(y))])).astype(float)/len(y))
         yPred = self.predict(X)
-        if showOutputs:
+        if visible:
             print yPred
 
-    def trainUsingSGD(self, X, y, nIterations=1000, minibatchSize=100, alpha=0.05, regLambda=0, visible=False):
+    def trainUsingSGD(self, X, y, nIterations=1000, minibatchSize=100, \
+                        alpha=0.05, regLambda=0, visible=False):
         self.alpha = alpha
         self.regLambda = regLambda
         self.visible = visible
@@ -79,7 +83,8 @@ class MyPyNN(object):
             yPred = self.predict(X)
             if visible:
                 print yPred
-            print "accuracy = " + str((np.sum([np.all((yPred[i]>0.5)==y[i]) for i in range(len(y))])).astype(float)/len(y))
+            print "accuracy = " + str((np.sum([np.all((yPred[i]>0.5)==y[i]) \
+                                        for i in range(len(y))])).astype(float)/len(y))
 
     def forwardProp(self, inputs):
         inputs = self.preprocessInputs(inputs)
