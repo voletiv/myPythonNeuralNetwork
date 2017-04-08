@@ -22,21 +22,22 @@ class MyPyNN(object):
                         (self.layerSizes[layer-1]+1,self.layerSizes[layer])))} \
                         for layer in range(1,len(self.layerSizes))]
 
-    def predict(self, X):
+    def predict(self, X, visible=False):
+        self.visible = visible
         inputs = self.preprocessInputs(X)
 
         if inputs.ndim!=1 and inputs.ndim!=2:
             print "X is not one or two dimensional, please check."
             return
 
-        if DEBUG:
+        if DEBUG or self.visible:
             print "PREDICT:"
             print inputs
 
         for l, layer in enumerate(self.network):
             inputs = self.addBiasTerms(inputs)
             inputs = self.sigmoid(np.dot(inputs, layer['weights']))
-            if DEBUG:
+            if DEBUG or self.visible:
                 print "Layer "+str(l+1)
                 print inputs
         
@@ -58,6 +59,7 @@ class MyPyNN(object):
     def trainUsingSGD(self, X, y, nIterations=1000, minibatchSize=100, alpha=0.05, regLambda=0, visible=False):
         self.alpha = alpha
         self.regLambda = regLambda
+        self.visible = visible
         X = self.preprocessInputs(X)
         y = self.preprocessOutputs(y)
         idx = range(len(X))
@@ -69,13 +71,13 @@ class MyPyNN(object):
             idx = idx[:minibatchSize]
             miniX = X[idx]
             miniY = y[idx]
-            a = self.forwardProp(miniX)
+            a = self.forwardProp(miniX, visible)
             if a==True:
                 self.backPropGradDescent(miniX, miniY)
             else:
                 return
             yPred = self.predict(X)
-            if showOutputs:
+            if visible:
                 print yPred
             print "accuracy = " + str((np.sum([np.all((yPred[i]>0.5)==y[i]) for i in range(len(y))])).astype(float)/len(y))
 
@@ -94,14 +96,14 @@ class MyPyNN(object):
                 str(self.layerSizes[0]) + ") of network."
             return False
         
-        if DEBUG:
+        if DEBUG or self.visible:
             print inputs
 
         for l, layer in enumerate(self.network):
             inputs = self.addBiasTerms(inputs)
             layer['outputs'] = self.sigmoid(np.dot(inputs, layer['weights']))
             inputs = np.array(layer['outputs'])
-            if DEBUG:
+            if DEBUG or self.visible:
                 print "Layer "+str(l+1)
                 print inputs
         del inputs
@@ -115,17 +117,17 @@ class MyPyNN(object):
         # Compute first error
         error = self.network[-1]['outputs'] - y
 
-        if DEBUG:
+        if DEBUG or self.visible:
             print "error = self.network[-1]['outputs'] - y:"
             print error
 
         for l, layer in enumerate(reversed(self.network)):
-            if DEBUG:
+            if DEBUG or self.visible:
                 print "LAYER "+str(len(self.layerSizes)-1-l)
             
             predOutputs = layer['outputs']
 
-            if DEBUG:
+            if DEBUG or self.visible:
                 print "predOutputs"
                 print predOutputs
 
@@ -133,7 +135,7 @@ class MyPyNN(object):
             delta = np.multiply(np.multiply(predOutputs, 1 - predOutputs), \
                     error)/len(y)
 
-            if DEBUG:
+            if DEBUG or self.visible:
                 print "To compute error to be backpropagated:"
                 print "del = predOutputs*(1 - predOutputs)*error :"
                 print delta
@@ -143,7 +145,7 @@ class MyPyNN(object):
             # Compute new error to be propagated back (bias term neglected in backpropagation)
             error = np.dot(delta, layer['weights'][1:,:].T)
 
-            if DEBUG:
+            if DEBUG or self.visible:
                 print "backprop error = np.dot(del, layer['weights'][1:,:].T) :"
                 print error
 
@@ -154,7 +156,7 @@ class MyPyNN(object):
                 inputs = np.array(self.network[len(self.layerSizes)-2-l-1]['outputs'])
             inputs = self.addBiasTerms(inputs)
             
-            if DEBUG:
+            if DEBUG or self.visible:
                 print "To compute errorTerm:"
                 print "inputs:"
                 print inputs
@@ -167,7 +169,7 @@ class MyPyNN(object):
             if errorTerm.ndim==1:
                 errorTerm.reshape((len(errorTerm), 1))
 
-            if DEBUG:
+            if DEBUG or self.visible:
                 print "errorTerm = np.dot(inputs.T, del) :"
                 print errorTerm
             
@@ -175,7 +177,7 @@ class MyPyNN(object):
             regWeight = np.zeros(layer['weights'].shape)
             regWeight[1:,:] = self.regLambda
 
-            if DEBUG:
+            if DEBUG or self.visible:
                 print "To update weights:"
                 print "alpha*errorTerm:"
                 print self.alpha*errorTerm
@@ -190,7 +192,7 @@ class MyPyNN(object):
             layer['weights'] = layer['weights'] - \
                 (self.alpha*errorTerm + np.multiply(regWeight,layer['weights']))
             
-            if DEBUG:
+            if DEBUG or self.visible:
                 print "Updated layer['weights'] = alpha*errorTerm + regTerm :"
                 print layer['weights']
 
