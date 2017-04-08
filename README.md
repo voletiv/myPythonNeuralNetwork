@@ -115,11 +115,19 @@ jupyter nbextension enable --py --sys-prefix widgetsnbextension
 
 - [drawing-animating-shapes-matplotlib](https://nickcharlton.net/posts/drawing-animating-shapes-matplotlib.html)
 
+- [Making Jupyter presentations using RISE](https://github.com/damianavila/RISE)
+
 - [matplotlib examples from SciPy](http://scipython.com/book/chapter-7-matplotlib/examples/simple-surface-plots/)
 
 - [Mathematical notations for LaTeX, which can also be used in Jupyter](https://en.wikibooks.org/wiki/LaTeX/Mathematics)
 
-- [Optional code visibility in iPython notebooks](http://chris-said.io/2016/02/13/how-to-make-polished-jupyter-presentations-with-optional-code-visibility/)
+- [Optional code visibility in iPython notebooks](https://chris-said.io/2016/02/13/how-to-make-polished-jupyter-presentations-with-optional-code-visibility/)
+
+- [Ultimate iPython notebook tips](https://blog.juliusschulz.de/blog/ultimate-ipython-notebook)
+
+- [Full preprocessing for medical images tutorial](https://www.kaggle.com/gzuidhof/data-science-bowl-2017/full-preprocessing-tutorial)
+
+- [Example ConvNet for a kaggle problem (cats vs dogs)](https://www.kaggle.com/sentdex/dogs-vs-cats-redux-kernels-edition/full-classification-example-with-convnet)
 
 - Fernando Pérez, Brian E. Granger, IPython: A System for Interactive Scientific Computing, Computing in Science and Engineering, vol. 9, no. 3, pp. 21-29, May/June 2007, doi:10.1109/MCSE.2007.53. URL: (http://ipython.org)
 

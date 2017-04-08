@@ -4,7 +4,7 @@ DEBUG = 0
 class MyPyNN(object):
 
     def __init__(self, nOfInputDims=3, nOfHiddenLayers=1, \
-                    hiddenLayerSizes=4, nOfOutputDims=2, alpha=0.05, regLambda=0):
+                    hiddenLayerSizes=4, nOfOutputDims=2):
 
         if isinstance(hiddenLayerSizes, int):
             hiddenLayerSizes = [hiddenLayerSizes]
@@ -16,9 +16,6 @@ class MyPyNN(object):
         self.layerSizes = list(hiddenLayerSizes) #list() => deep copy
         self.layerSizes.insert(0, nOfInputDims)
         self.layerSizes.append(nOfOutputDims)
-
-        self.alpha = alpha
-        self.regLambda = regLambda
 
         # Network
         self.network = [{'weights':np.array(np.random.random(\
@@ -33,6 +30,7 @@ class MyPyNN(object):
             return
 
         if DEBUG:
+            print "PREDICT:"
             print inputs
 
         for l, layer in enumerate(self.network):
@@ -44,28 +42,42 @@ class MyPyNN(object):
         
         return inputs
 
-    def trainUsingGD(self, X, y, nIterations=1000):
+    def trainUsingGD(self, X, y, nIterations=1000, alpha=0.05, regLambda=0, showOutputs=False):
+        self.alpha = alpha
+        self.regLambda = regLambda
         for i in range(nIterations):
             print i
             self.forwardProp(X)
             self.backPropGradDescent(X, y)
-            print self.predict(X)
+            yPred = self.predict(X)
+            print "accuracy = " + str((np.sum([np.all((yPred[i]>0.5)==y[i]) for i in range(len(y))])).astype(float)/len(y))
+        yPred = self.predict(X)
+        if showOutputs:
+            print yPred
 
-    def trainUsingSGD(self, X, y, nIterations=100):
+    def trainUsingSGD(self, X, y, nIterations=1000, minibatchSize=100, alpha=0.05, regLambda=0, visible=False):
+        self.alpha = alpha
+        self.regLambda = regLambda
         X = self.preprocessInputs(X)
         y = self.preprocessOutputs(y)
         idx = range(len(X))
+        if minibatchSize > len(X):
+            minibatchSize = int(len(X)/10)+1
         for n in range(nIterations):
-            print n
+            print "Iteration "+str(n)+" of "+str(nIterations)
             np.random.shuffle(idx)
-            for i in idx:
-                print "  "+str(i)
-                a = self.forwardProp(X[i])
-                if a==True:
-                    self.backPropGradDescent(X[i], y[i])
-                else:
-                    return
-            print self.predict(X)
+            idx = idx[:minibatchSize]
+            miniX = X[idx]
+            miniY = y[idx]
+            a = self.forwardProp(miniX)
+            if a==True:
+                self.backPropGradDescent(miniX, miniY)
+            else:
+                return
+            yPred = self.predict(X)
+            if showOutputs:
+                print yPred
+            print "accuracy = " + str((np.sum([np.all((yPred[i]>0.5)==y[i]) for i in range(len(y))])).astype(float)/len(y))
 
     def forwardProp(self, inputs):
         inputs = self.preprocessInputs(inputs)
@@ -122,17 +134,17 @@ class MyPyNN(object):
                     error)/len(y)
 
             if DEBUG:
-                print "To compute error to be propagated:"
-                print "delta = predOutputs*(1 - predOutputs)*error :"
+                print "To compute error to be backpropagated:"
+                print "del = predOutputs*(1 - predOutputs)*error :"
                 print delta
                 print "layer['weights']:"
                 print layer['weights']
 
-            # Compute new error (for next iteration)
+            # Compute new error to be propagated back (bias term neglected in backpropagation)
             error = np.dot(delta, layer['weights'][1:,:].T)
 
             if DEBUG:
-                print "error = np.dot(delta, layer['weights'][1:,:].T) :"
+                print "backprop error = np.dot(del, layer['weights'][1:,:].T) :"
                 print error
 
             # inputs === outputs from previous layer
@@ -146,17 +158,17 @@ class MyPyNN(object):
                 print "To compute errorTerm:"
                 print "inputs:"
                 print inputs
-                print "delta:"
+                print "del:"
                 print delta
 
-            # errorTerm = inputs'.delta
+            # errorTerm = (inputs.T).*(delta)
             # delta === nxneurons, inputs === nxprev, W === prevxneurons
             errorTerm = np.dot(inputs.T, delta)
             if errorTerm.ndim==1:
                 errorTerm.reshape((len(errorTerm), 1))
 
             if DEBUG:
-                print "errorTerm = np.dot(inputs.T, delta) :"
+                print "errorTerm = np.dot(inputs.T, del) :"
                 print errorTerm
             
             # regularization term
@@ -189,9 +201,9 @@ class MyPyNN(object):
             X = np.array([X])
         # if X is 1D
         if X.ndim==1:
-            if self.layerSizes[0]==1:
+            if self.layerSizes[0]==1: #if ndim=1
                 X = np.reshape(X, (len(X),1))
-            else:
+            else: #if X is only 1 nd-ndimensional vector
                 X = np.reshape(X, (1,len(X)))
         return X
 
