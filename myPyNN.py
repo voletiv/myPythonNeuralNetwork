@@ -71,7 +71,7 @@ class MyPyNN(object):
             idx = idx[:minibatchSize]
             miniX = X[idx]
             miniY = y[idx]
-            a = self.forwardProp(miniX, visible)
+            a = self.forwardProp(miniX)
             if a==True:
                 self.backPropGradDescent(miniX, miniY)
             else:
