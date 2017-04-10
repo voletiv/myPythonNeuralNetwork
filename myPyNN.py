@@ -32,31 +32,43 @@ class MyPyNN(object):
         
         return inputs
 
-    def trainUsingGD(self, X, y, nIterations=1000, alpha=0.05,
+    def trainUsingGD(self, X, y, nIterations=1000, learningRate=0.05,
                         regLambda=0, visible=False):
-        self.alpha = alpha
+        self.learningRate = learningRate
         self.regLambda = regLambda
         self.visible = visible
+        yPred = self.predict(X, visible=self.visible)
+        print "accuracy = " + str((np.sum([np.all((yPred[k]>0.5)==y[k])
+                                        for k in range(len(y))])).astype(float)/len(y))
+        print "cost = " + str(0.5*np.sum((yPred-y)**2)/len(y))
         for i in range(nIterations):
-            print i
+            print "Iteration "+str(i)+" of "+str(nIterations)
             self.forwardProp(X)
             self.backPropGradDescent(X, y)
             yPred = self.predict(X, visible=self.visible)
-            print "accuracy = " + str((np.sum([np.all((yPred[i]>0.5)==y[i])
-                                        for i in range(len(y))])).astype(float)/len(y))
+            print "accuracy = " + str((np.sum([np.all((yPred[k]>0.5)==y[k])
+                                        for k in range(len(y))])).astype(float)/len(y))
+            print "cost = " + str(0.5*np.sum((yPred-y)**2)/len(y))
 
     def trainUsingSGD(self, X, y, nIterations=1000, minibatchSize=100,
-                        alpha=0.05, regLambda=0, visible=False):
-        self.alpha = float(alpha)
+                        learningRate=0.05, regLambda=0, visible=False):
+        self.learningRate = float(learningRate)
         self.regLambda = regLambda
         self.visible = visible
         X = self.preprocessInputs(X)
         y = self.preprocessOutputs(y)
+        yPred = self.predict(X, visible=self.visible)
+        if yPred.shape != y.shape:
+            print "Shape of y ("+str(y.shape)+") does not match what shape of y is supposed to be: "+str(yPred.shape)
+            return
+        print "accuracy = " + str((np.sum([np.all((yPred[k]>0.5)==y[k])
+                                        for k in range(len(y))])).astype(float)/len(y))
+        print "cost = " + str(0.5*np.sum((yPred-y)**2)/len(y))
         idx = range(len(X))
         if minibatchSize > len(X):
             minibatchSize = int(len(X)/10)+1
-        for n in range(nIterations):
-            print "Iteration "+str(n)+" of "+str(nIterations)
+        for i in range(nIterations):
+            print "Iteration "+str(i)+" of "+str(nIterations)
             np.random.shuffle(idx)
             idx = idx[:minibatchSize]
             miniX = X[idx]
@@ -69,8 +81,9 @@ class MyPyNN(object):
             yPred = self.predict(X, visible=self.visible)
             if self.visible:
                 print yPred
-            print "accuracy = " + str((np.sum([np.all((yPred[i]>0.5)==y[i])
-                                        for i in range(len(y))])).astype(float)/len(y))
+            print "accuracy = " + str((np.sum([np.all((yPred[k]>0.5)==y[k])
+                                        for k in range(len(y))])).astype(float)/len(y))
+            print "cost = " + str(0.5*np.sum((yPred-y)**2)/len(y))
 
     def forwardProp(self, inputs):
         inputs = self.preprocessInputs(inputs)
@@ -125,7 +138,7 @@ class MyPyNN(object):
 
             # delta = (z*(1-z))*(z - zHat) === nxneurons
             delta = np.multiply(np.multiply(predOutputs, 1 - predOutputs),
-                    error)/len(y)
+                    error)
 
             if DEBUG or self.visible:
                 print "To compute error to be backpropagated:"
@@ -157,7 +170,7 @@ class MyPyNN(object):
 
             # errorTerm = (inputs.T).*(delta)
             # delta === nxneurons, inputs === nxprev, W === prevxneurons
-            errorTerm = np.dot(inputs.T, delta)
+            errorTerm = np.dot(inputs.T, delta)/len(y)
             if errorTerm.ndim==1:
                 errorTerm.reshape((len(errorTerm), 1))
 
@@ -171,8 +184,8 @@ class MyPyNN(object):
 
             if DEBUG or self.visible:
                 print "To update weights:"
-                print "alpha*errorTerm:"
-                print self.alpha*errorTerm
+                print "learningRate*errorTerm:"
+                print self.learningRate*errorTerm
                 print "regWeight:"
                 print regWeight
                 print "weights:"
@@ -182,10 +195,10 @@ class MyPyNN(object):
 
             # Update weights
             self.weights[len(self.weights)-l-1] = w - \
-                (self.alpha*errorTerm + np.multiply(regWeight,w))
+                (self.learningRate*errorTerm + np.multiply(regWeight,w))
             
             if DEBUG or self.visible:
-                print "Updated 'weights' = alpha*errorTerm + regTerm :"
+                print "Updated 'weights' = learningRate*errorTerm + regTerm :"
                 print self.weights[len(self.weights)-l-1]
 
     def preprocessInputs(self, X):

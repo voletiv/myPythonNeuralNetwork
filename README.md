@@ -74,8 +74,13 @@ I ran this in OS X, after installing brew for command-line use, and pip for pyth
 
 ### Python
 
-I designed the tutorial on Python 2.7.
+I designed the tutorial on Python 2.7, can be run on Python 3 as well.
 
+### Packages
+
+- numpy
+- matplotlib
+- ipywidgets
 
 ### Jupyter
 
@@ -117,9 +122,19 @@ jupyter nbextension enable --py --sys-prefix widgetsnbextension
 
 - [Making Jupyter presentations using RISE](https://github.com/damianavila/RISE)
 
+- [MNIST dataset and results](http://yann.lecun.com/exdb/mnist/)
+
+- [MNIST dataset .npz file (Amazon AWS)](https://s3.amazonaws.com/img-datasets/mnist.npz)
+
+- [NpzFile doc](http://docr.it/numpy/lib/npyio/NpzFile)
+
 - [matplotlib examples from SciPy](http://scipython.com/book/chapter-7-matplotlib/examples/simple-surface-plots/)
 
+- [Yann LeCun's backprop paper, containing tips for efficient backpropagation](http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf)
+
 - [Mathematical notations for LaTeX, which can also be used in Jupyter](https://en.wikibooks.org/wiki/LaTeX/Mathematics)
+
+- [JupyterHub](http://jupyterhub.readthedocs.io/en/latest/getting-started.html)
 
 - [Optional code visibility in iPython notebooks](https://chris-said.io/2016/02/13/how-to-make-polished-jupyter-presentations-with-optional-code-visibility/)
 

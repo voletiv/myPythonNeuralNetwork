@@ -5,10 +5,6 @@ X = [[2,2,2], [3,3,3], [4,4,4], [5,5,5], [6,6,6], [7,7,7], [8,8,8], [9,9,9], [10
 y = [.2, .3, .4, .5, .6, .7, .8, .9, 0, .1]
 myNN = MyPyNN([3, 10, 1])
 
-X = np.random.random((10,3))
-y = np.reshape(np.array([1, 0, 0, 1, 0, 1, 1, 0, 1, 0]), (10,1))
-myNN = MyPyNN(3, 1, 4, 1)
-myNN.trainUsingSGD(X, y, alpha=0.8)
 
 # MANUAL CALCULATIONS
 def addBiasTerms(X):
@@ -24,8 +20,8 @@ def sigmoid(z):
 X = np.array([[0,0], [0,1], [1,0], [1,1]])
 y = np.array([[0], [1], [1], [1]])
 myNN = MyPyNN([2, 1, 1])
-alpha = 0.9
-nIterations = 600
+lr = 1.5
+nIterations = 200
 W01 = myNN.weights[0]
 W02 = myNN.weights[1]
 W1 = W01
@@ -44,7 +40,7 @@ for i in range(nIterations):
     W1 = newW1
     W2 = newW2
 
-myNN.trainUsingGD(X, y, alpha=alpha, nIterations=nIterations)
+myNN.trainUsingGD(X, y, learningRate=lr, nIterations=nIterations)
 newW1 == myNN.weights[0]
 newW2 == myNN.weights[1]
 
@@ -62,10 +58,51 @@ myNN4.weights[0] = myNN1.weights[0]
 myNN4.weights[1] = myNN1.weights[1]
 myNN5.weights[0] = myNN1.weights[0]
 myNN5.weights[1] = myNN1.weights[1]
-myNN1.trainUsingGD(X, y, alpha=0.1, nIterations=1000)
-myNN2.trainUsingGD(X, y, alpha=0.5, nIterations=600)
-myNN3.trainUsingGD(X, y, alpha=1, nIterations=300)
-myNN4.trainUsingGD(X, y, alpha=2, nIterations=200)
-myNN5.trainUsingGD(X, y, alpha=200, nIterations=1000)
+myNN1.trainUsingGD(X, y, learningRate=0.1, nIterations=2500)
+myNN2.trainUsingGD(X, y, learningRate=0.5, nIterations=600)
+myNN3.trainUsingGD(X, y, learningRate=1, nIterations=400)
+myNN4.trainUsingGD(X, y, learningRate=2, nIterations=200)
+myNN5.trainUsingGD(X, y, learningRate=200, nIterations=1000)
+
+# MNIST DATA
+# Use numpy.load() to load the .npz file
+f = np.load('/Users/vikram.v/Downloads/mnist.npz')
+# To check files stored in .npz file
+f.files
+# Saving the files
+x_train = f['x_train']
+y_train = f['y_train']
+x_test = f['x_test']
+y_test = f['y_test']
+f.close()
+# To check type of the dataset
+type(x_train)
+type(y_train)
+# To check data
+x_train.shape
+y_train.shape
+fig = plt.figure(figsize=(10, 2))
+for i in range(20):
+    ax1 = fig.add_subplot(2, 10, i+1)
+    ax1.imshow(x_train[i], cmap='gray');
+    ax1.axis('off')
+# Preprocess inputs
+x_train_new = np.array([x.flatten() for x in x_train])
+y_train_new = np.zeros((len(y_train), 10))
+for i in range(len(y_train)):
+    y_train_new[i][y_train[i]] = 1
+
+x_test_new = np.array([x.flatten() for x in x_test])
+y_test_new = np.zeros((len(y_test), 10))
+for i in range(len(y_test)):
+    y_test_new[i][y_test[i]] = 1
+
+# Make network
+myNN = MyPyNN([784, 15, 10])
+lr = 1.5
+nIterations = 1000
+minibatchSize = 100
+myNN.trainUsingGD(x_train_new, y_train_new, learningRate=lr, nIterations=nIterations)
+myNN.trainUsingSGD(x_train_new, y_train_new, nIterations=nIterations, minibatchSize=100, learningRate=lr)
 
 
