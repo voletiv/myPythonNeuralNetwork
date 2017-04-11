@@ -120,7 +120,7 @@ jupyter nbextension enable --py --sys-prefix widgetsnbextension
 
 - [drawing-animating-shapes-matplotlib](https://nickcharlton.net/posts/drawing-animating-shapes-matplotlib.html)
 
-- [Making Jupyter presentations using RISE](https://github.com/damianavila/RISE)
+- [RISE - for Jupyter presentations](https://github.com/damianavila/RISE)
 
 - [MNIST dataset and results](http://yann.lecun.com/exdb/mnist/)
 

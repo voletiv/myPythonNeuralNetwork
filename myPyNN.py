@@ -9,11 +9,14 @@ class MyPyNN(object):
 
         # Network
         self.weights = [np.random.randn(x+1, y) 
-                        for x, y in zip(layers[:-1], layers[1:])]
+                        for x, y in zip(self.layers[:-1], self.layers[1:])]
+
+        self.meanX = np.zeros((1, self.layers[0]))
 
     def predict(self, X, visible=False):
         self.visible = visible
-        inputs = self.preprocessInputs(X)
+        # mean-centering
+        inputs = self.preprocessTestingInputs(X) - self.meanX
 
         if inputs.ndim!=1 and inputs.ndim!=2:
             print "X is not one or two dimensional, please check."
@@ -23,7 +26,7 @@ class MyPyNN(object):
             print "PREDICT:"
             print inputs
 
-        for w in self.weights:
+        for l, w in enumerate(self.weights):
             inputs = self.addBiasTerms(inputs)
             inputs = self.sigmoid(np.dot(inputs, w))
             if DEBUG or self.visible:
@@ -32,58 +35,120 @@ class MyPyNN(object):
         
         return inputs
 
-    def trainUsingGD(self, X, y, nIterations=1000, learningRate=0.05,
-                        regLambda=0, visible=False):
-        self.learningRate = learningRate
-        self.regLambda = regLambda
-        self.visible = visible
-        yPred = self.predict(X, visible=self.visible)
-        print "accuracy = " + str((np.sum([np.all((yPred[k]>0.5)==y[k])
-                                        for k in range(len(y))])).astype(float)/len(y))
-        print "cost = " + str(0.5*np.sum((yPred-y)**2)/len(y))
-        for i in range(nIterations):
-            print "Iteration "+str(i)+" of "+str(nIterations)
-            self.forwardProp(X)
-            self.backPropGradDescent(X, y)
-            yPred = self.predict(X, visible=self.visible)
-            print "accuracy = " + str((np.sum([np.all((yPred[k]>0.5)==y[k])
-                                        for k in range(len(y))])).astype(float)/len(y))
-            print "cost = " + str(0.5*np.sum((yPred-y)**2)/len(y))
-
     def trainUsingSGD(self, X, y, nIterations=1000, minibatchSize=100,
-                        learningRate=0.05, regLambda=0, visible=False):
+                        learningRate=0.05, regLambda=0, adaptLearningRate=False, 
+                        normalizeInputs=False, meanCentering=False, 
+                        printTestAccuracy=False, testX=None, testY=None, 
+                        visible=False):
         self.learningRate = float(learningRate)
         self.regLambda = regLambda
+        self.adaptLearningRate = adaptLearningRate
+        self.normalizeInputs = normalizeInputs
+        self.meanCentering = meanCentering
         self.visible = visible
-        X = self.preprocessInputs(X)
+        
+        X = self.preprocessTrainingInputs(X)
         y = self.preprocessOutputs(y)
+
+        # Test data
+        if printTestAccuracy:
+            if testX==None and testY==None:
+                print "No test data given"
+                testX = np.zeros((1, len(X)))
+                testY = np.zeros((1,1))
+            elif testX==None or testY==None:
+                print "One of testData not available"
+                return
+            else:
+                testX = self.preprocessTrainingInputs(testX)
+                testY = self.preprocessOutputs(testY)
+            if len(testX)!=len(testY):
+                print "Test Datas not of same length"
+                return
+        
         yPred = self.predict(X, visible=self.visible)
+        
         if yPred.shape != y.shape:
             print "Shape of y ("+str(y.shape)+") does not match what shape of y is supposed to be: "+str(yPred.shape)
             return
-        print "accuracy = " + str((np.sum([np.all((yPred[k]>0.5)==y[k])
-                                        for k in range(len(y))])).astype(float)/len(y))
-        print "cost = " + str(0.5*np.sum((yPred-y)**2)/len(y))
-        idx = range(len(X))
+        
+        self.trainAccuracy = (np.sum([np.argmax(yPred[k])==np.argmax(y[k])
+                            for k in range(len(y))])).astype(float)/len(y)
+        print "train accuracy = " + str(self.trainAccuracy)
+
+        yTestPred = self.predict(testX, visible=self.visible)
+        self.testAccuracy = np.sum([np.argmax(yTestPred[k])==np.argmax(testY[k])
+                            for k in range(len(testY))])/float(len(testY))
+        print "test accuracy = " + str(self.testAccuracy)
+        
+        self.prevCost = 0.5*np.sum((yPred-y)**2)/len(y)
+        print "cost = " + str(self.prevCost)
+        self.cost = self.prevCost
+        
+        # mean-centering
+        if self.meanCentering:
+            inputs = X - self.meanX
+        else:
+            inputs = X
+
+        self.inputs = inputs
+        
+        if DEBUG or self.visible:
+            print "train input:"+str(inputs)
+
+        # Just to ensure minibatchSize !> len(X)
         if minibatchSize > len(X):
             minibatchSize = int(len(X)/10)+1
+
+        # old weights for adaptive learning
+        self.oldWeights = [np.random.randn(i+1, j) 
+                for i, j in zip(self.layers[:-1], self.layers[1:])]
+        
         for i in range(nIterations):
+            
             print "Iteration "+str(i)+" of "+str(nIterations)
+            
+            # minibatch
+            idx = range(len(inputs))
             np.random.shuffle(idx)
             idx = idx[:minibatchSize]
-            miniX = X[idx]
+            print "minibatch indices: "+str(idx)
+
+            miniX = inputs[idx]
             miniY = y[idx]
+            
+            # Forward propagate
             a = self.forwardProp(miniX)
-            if a==True:
-                self.backPropGradDescent(miniX, miniY)
-            else:
+            
+            if a==False:
                 return
+
+            # Save old weights before backProp in case of adaptLR
+            if adaptLearningRate:
+                for i in range(len(self.weights)):
+                    self.oldWeights[i] = self.weights[i]
+
+            # Back propagate, update weights
+            self.backPropGradDescent(miniX, miniY)
+
             yPred = self.predict(X, visible=self.visible)
-            if self.visible:
-                print yPred
-            print "accuracy = " + str((np.sum([np.all((yPred[k]>0.5)==y[k])
-                                        for k in range(len(y))])).astype(float)/len(y))
-            print "cost = " + str(0.5*np.sum((yPred-y)**2)/len(y))
+
+            self.trainAccuracy = (np.sum([np.argmax(yPred[k])==np.argmax(y[k])
+                                for k in range(len(y))])).astype(float)/len(y)
+            print "train accuracy = " + str(self.trainAccuracy)
+            if printTestAccuracy:
+                yTestPred = self.predict(testX, visible=self.visible)
+                self.testAccuracy = (np.sum([np.argmax(yTestPred[k])==np.argmax(testY[k])
+                                    for k in range(len(testY))])).astype(float)/len(testY)
+                print "test accuracy = " + str(self.testAccuracy)
+
+            self.cost = 0.5*np.sum((yPred-y)**2)/len(y)            
+            print "cost = " + str(self.cost)
+            
+            if adaptLearningRate:
+                self.adaptLR()
+            
+            self.prevCost = self.cost
 
     def forwardProp(self, inputs):
         inputs = self.preprocessInputs(inputs)
@@ -110,7 +175,9 @@ class MyPyNN(object):
             inputs = np.array(self.outputs[-1])
             if DEBUG or self.visible:
                 print "Layer "+str(l+1)
-                print inputs
+                print "inputs: "+str(inputs)
+                print "weights: "+str(w)
+                print "output: "+str(inputs)
         del inputs
 
         return True
@@ -201,6 +268,33 @@ class MyPyNN(object):
                 print "Updated 'weights' = learningRate*errorTerm + regTerm :"
                 print self.weights[len(self.weights)-l-1]
 
+    def adaptLR(self):
+        if self.cost > self.prevCost:
+            print "Cost increased!!"
+            self.learningRate /= 2.0
+            print "   - learningRate halved to: "+str(self.learningRate)
+            for i in range(len(self.weights)):
+                self.weights[i] = self.oldWeights[i]
+            print "   - weights reverted back"
+        # good function
+        else:
+            self.learningRate *= 1.05
+            print "   - learningRate increased by 5% to: "+str(self.learningRate)
+
+    def preprocessTrainingInputs(self, X):
+        X = self.preprocessInputs(X)
+        if self.normalizeInputs and np.max(X) > 1.0:
+            X = X/255.0
+        if np.all(self.meanX == np.zeros((1, self.layers[0]))) and self.meanCentering:
+            self.meanX = np.reshape(np.mean(X, axis=0), (1, X.shape[1]))
+        return X
+
+    def preprocessTestingInputs(self, X):
+        X = self.preprocessInputs(X)
+        if self.normalizeInputs and np.max(X) > 1.0:
+            X = X/255.0
+        return X
+
     def preprocessInputs(self, X):
         X = np.array(X, dtype=float)
         # if X is int
@@ -236,3 +330,30 @@ class MyPyNN(object):
 
     def sigmoid(self, z):
         return 1/(1 + np.exp(-z))
+
+    def loadMNISTData(self, path='/Users/vikram.v/Downloads/mnist.npz'):
+        # Use numpy.load() to load the .npz file
+        f = np.load(path)
+
+        # To check files stored in .npz file
+        f.files
+
+        # Saving the files
+        x_train = f['x_train']
+        y_train = f['y_train']
+        x_test = f['x_test']
+        y_test = f['y_test']
+        f.close()
+
+        # Preprocess inputs
+        x_train_new = np.array([x.flatten() for x in x_train])
+        y_train_new = np.zeros((len(y_train), 10))
+        for i in range(len(y_train)):
+            y_train_new[i][y_train[i]] = 1
+
+        x_test_new = np.array([x.flatten() for x in x_test])
+        y_test_new = np.zeros((len(y_test), 10))
+        for i in range(len(y_test)):
+            y_test_new[i][y_test[i]] = 1
+
+        return [x_train_new, y_train_new, x_test_new, y_test_new]
