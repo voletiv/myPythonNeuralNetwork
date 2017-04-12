@@ -122,6 +122,8 @@ jupyter nbextension enable --py --sys-prefix widgetsnbextension
 
 - [RISE - for Jupyter presentations](https://github.com/damianavila/RISE)
 
+- [MathJax syntax list](https://math.meta.stackexchange.com/questions/5020/mathjax-basic-tutorial-and-quick-reference)
+
 - [MNIST dataset and results](http://yann.lecun.com/exdb/mnist/)
 
 - [MNIST dataset .npz file (Amazon AWS)](https://s3.amazonaws.com/img-datasets/mnist.npz)
