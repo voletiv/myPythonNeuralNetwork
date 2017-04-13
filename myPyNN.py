@@ -11,7 +11,16 @@ class MyPyNN(object):
         self.weights = [np.random.randn(x+1, y) 
                         for x, y in zip(self.layers[:-1], self.layers[1:])]
 
+        # For mean-centering
         self.meanX = np.zeros((1, self.layers[0]))
+
+        # Default options
+        self.learningRate = 1.0
+        self.regLambda = 0
+        self.adaptLearningRate = False
+        self.normalizeInputs = False
+        self.meanCentering = False
+        self.visible = False
 
     def predict(self, X, visible=False):
         self.visible = visible
@@ -35,7 +44,7 @@ class MyPyNN(object):
         
         return inputs
 
-    def trainUsingSGD(self, X, y, nIterations=1000, minibatchSize=100,
+    def trainUsingMinibatchGD(self, X, y, nEpochs=1000, minibatchSize=100,
                         learningRate=0.05, regLambda=0, adaptLearningRate=False, 
                         normalizeInputs=False, meanCentering=False, 
                         printTestAccuracy=False, testX=None, testY=None, 
@@ -49,6 +58,35 @@ class MyPyNN(object):
         
         X = self.preprocessTrainingInputs(X)
         y = self.preprocessOutputs(y)
+        
+        yPred = self.predict(X, visible=self.visible)
+        
+        if yPred.shape != y.shape:
+            print "Shape of y ("+str(y.shape)+") does not match what shape of y is supposed to be: "+str(yPred.shape)
+            return
+        
+        self.trainAccuracy = (np.sum([np.argmax(yPred[k])==np.argmax(y[k])
+                            for k in range(len(y))])).astype(float)/len(y)
+        print "train accuracy = " + str(self.trainAccuracy)
+        
+        self.prevCost = 0.5*np.sum((yPred-y)**2)/len(y)
+        print "cost = " + str(self.prevCost)
+        self.cost = self.prevCost
+
+        # mean-centering
+        if self.meanCentering:
+            X = X - self.meanX
+        else:
+            X = X
+
+        self.inputs = X
+        
+        if DEBUG or self.visible:
+            print "train input:"+str(inputs)
+
+        # Just to ensure minibatchSize !> len(X)
+        if minibatchSize > len(X):
+            minibatchSize = int(len(X)/10)+1
 
         # Test data
         if printTestAccuracy:
@@ -65,71 +103,51 @@ class MyPyNN(object):
             if len(testX)!=len(testY):
                 print "Test Datas not of same length"
                 return
-        
-        yPred = self.predict(X, visible=self.visible)
-        
-        if yPred.shape != y.shape:
-            print "Shape of y ("+str(y.shape)+") does not match what shape of y is supposed to be: "+str(yPred.shape)
-            return
-        
-        self.trainAccuracy = (np.sum([np.argmax(yPred[k])==np.argmax(y[k])
-                            for k in range(len(y))])).astype(float)/len(y)
-        print "train accuracy = " + str(self.trainAccuracy)
-
-        yTestPred = self.predict(testX, visible=self.visible)
-        self.testAccuracy = np.sum([np.argmax(yTestPred[k])==np.argmax(testY[k])
-                            for k in range(len(testY))])/float(len(testY))
-        print "test accuracy = " + str(self.testAccuracy)
-        
-        self.prevCost = 0.5*np.sum((yPred-y)**2)/len(y)
-        print "cost = " + str(self.prevCost)
-        self.cost = self.prevCost
-        
-        # mean-centering
-        if self.meanCentering:
-            inputs = X - self.meanX
-        else:
-            inputs = X
-
-        self.inputs = inputs
-        
-        if DEBUG or self.visible:
-            print "train input:"+str(inputs)
-
-        # Just to ensure minibatchSize !> len(X)
-        if minibatchSize > len(X):
-            minibatchSize = int(len(X)/10)+1
-
-        # old weights for adaptive learning
-        self.oldWeights = [np.random.randn(i+1, j) 
-                for i, j in zip(self.layers[:-1], self.layers[1:])]
-        
-        for i in range(nIterations):
             
-            print "Iteration "+str(i)+" of "+str(nIterations)
-            
-            # minibatch
-            idx = range(len(inputs))
-            np.random.shuffle(idx)
-            idx = idx[:minibatchSize]
-            print "minibatch indices: "+str(idx)
+            yTestPred = self.predict(testX, visible=self.visible)
+            self.testAccuracy = np.sum([np.argmax(yTestPred[k])==np.argmax(testY[k])
+                                for k in range(len(testY))])/float(len(testY))
+            print "test accuracy = " + str(self.testAccuracy)
 
-            miniX = inputs[idx]
-            miniY = y[idx]
+        # Randomly initialize old weights (for adaptive learning), will copy values later 
+        if adaptLearningRate:
+            self.oldWeights = [np.random.randn(i+1, j) 
+                    for i, j in zip(self.layers[:-1], self.layers[1:])]
+        
+        # For each epoch
+        for i in range(nEpochs):
             
-            # Forward propagate
-            a = self.forwardProp(miniX)
+            print "Epoch "+str(i)+" of "+str(nEpochs)
             
-            if a==False:
-                return
+            ## Find minibatches
+            # Generate list of indices of full training data
+            fullIdx = list(range(len(X)))
+            # Shuffle the list
+            np.random.shuffle(fullIdx)
+            # Make list of mininbatches
+            minibatches = [fullIdx[k:k+minibatchSize] 
+                            for k in xrange(0, len(X), minibatchSize)]
 
-            # Save old weights before backProp in case of adaptLR
-            if adaptLearningRate:
-                for i in range(len(self.weights)):
-                    self.oldWeights[i] = self.weights[i]
+            # For each minibatch
+            for mininbatch in mininbatches:
+                # Find X and y for each minibatch
+                miniX = X[idx]
+                miniY = y[idx]
+                
+                # Forward propagate through miniX
+                a = self.forwardProp(miniX)
+                
+                # Check if Forward Propagation was successful
+                if a==False:
+                    return
 
-            # Back propagate, update weights
-            self.backPropGradDescent(miniX, miniY)
+                # Save old weights before backProp in case of adaptLR
+                if adaptLearningRate:
+                    for i in range(len(self.weights)):
+                        self.oldWeights[i] = np.array(self.weights[i])
+
+                # Back propagate, update weights for minibatch
+                self.backPropGradDescent(miniX, miniY)
 
             yPred = self.predict(X, visible=self.visible)
 
@@ -148,6 +166,8 @@ class MyPyNN(object):
             if adaptLearningRate:
                 self.adaptLR()
             
+            self.evaluate(X, y)
+
             self.prevCost = self.cost
 
     def forwardProp(self, inputs):
@@ -168,11 +188,20 @@ class MyPyNN(object):
         if DEBUG or self.visible:
             print inputs
 
+        # Save the outputs of each layer
         self.outputs = []
+
+        # For each layer
         for l, w in enumerate(self.weights):
+            # Add bias term to the input
             inputs = self.addBiasTerms(inputs)
+
+            # Calculate the output
             self.outputs.append(self.sigmoid(np.dot(inputs, w)))
+
+            # Set this as the input to the next layer
             inputs = np.array(self.outputs[-1])
+
             if DEBUG or self.visible:
                 print "Layer "+str(l+1)
                 print "inputs: "+str(inputs)
@@ -183,29 +212,33 @@ class MyPyNN(object):
         return True
 
     def backPropGradDescent(self, X, y):
+        print "...Backward"
+
+        # Correct the formats of inputs and outputs
         X = self.preprocessInputs(X)
         y = self.preprocessOutputs(y)
-        print "...Backward"
+
         # Compute first error
-        error = self.outputs[-1] - y
+        bpError = self.outputs[-1] - y
 
         if DEBUG or self.visible:
             print "error = self.outputs[-1] - y:"
             print error
 
+        # For each layer in reverse order (last layer to first layer)
         for l, w in enumerate(reversed(self.weights)):
             if DEBUG or self.visible:
                 print "LAYER "+str(len(self.weights)-l)
             
-            predOutputs = self.outputs[len(self.weights)-l-1]
+            # The calculated output "z" of that layer
+            predOutputs = self.outputs[-l-1]
 
             if DEBUG or self.visible:
                 print "predOutputs"
                 print predOutputs
 
-            # delta = (z*(1-z))*(z - zHat) === nxneurons
-            delta = np.multiply(np.multiply(predOutputs, 1 - predOutputs),
-                    error)
+            # delta = error*(z*(1-z)) === nxneurons
+            delta = np.multiply(error, np.multiply(predOutputs, 1 - predOutputs))
 
             if DEBUG or self.visible:
                 print "To compute error to be backpropagated:"
@@ -215,18 +248,18 @@ class MyPyNN(object):
                 print w
 
             # Compute new error to be propagated back (bias term neglected in backpropagation)
-            error = np.dot(delta, w[1:,:].T)
+            bpError = np.dot(delta, w[1:,:].T)
 
             if DEBUG or self.visible:
                 print "backprop error = np.dot(del, w[1:,:].T) :"
                 print error
 
-            # inputs === outputs from previous layer
+            # If we are at first layer, inputs are data points
             if l==len(self.weights)-1:
-                inputs = np.array(X)
+                inputs = self.addBiasTerms(X)
+            # Else, inputs === outputs from previous layer
             else:
-                inputs = np.array(self.outputs[len(self.weights)-l-2])
-            inputs = self.addBiasTerms(inputs)
+                inputs = self.addBiasTerms(self.outputs[-l-2])
             
             if DEBUG or self.visible:
                 print "To compute errorTerm:"
@@ -235,7 +268,7 @@ class MyPyNN(object):
                 print "del:"
                 print delta
 
-            # errorTerm = (inputs.T).*(delta)
+            # errorTerm = (inputs.T).*(delta)/n
             # delta === nxneurons, inputs === nxprev, W === prevxneurons
             errorTerm = np.dot(inputs.T, delta)/len(y)
             if errorTerm.ndim==1:
@@ -247,7 +280,7 @@ class MyPyNN(object):
             
             # regularization term
             regWeight = np.zeros(w.shape)
-            regWeight[1:,:] = self.regLambda
+            regWeight[1:,:] = self.regLambda #bias term neglected
 
             if DEBUG or self.visible:
                 print "To update weights:"
@@ -261,7 +294,7 @@ class MyPyNN(object):
                 print regWeight*w
 
             # Update weights
-            self.weights[len(self.weights)-l-1] = w - \
+            self.weights[-l-1] = w - \
                 (self.learningRate*errorTerm + np.multiply(regWeight,w))
             
             if DEBUG or self.visible:
@@ -330,6 +363,13 @@ class MyPyNN(object):
 
     def sigmoid(self, z):
         return 1/(1 + np.exp(-z))
+
+    def evaluate(self, X, Y):
+        yPreds = forwardProp(X, self.weights)[-1]
+        test_results = [(np.argmax(yPreds[i]), np.argmax(Y[i]))
+                            for i in range(len(Y))]
+        yes = sum(int(x == y) for (x, y) in test_results)
+        print(str(yes)+" out of "+str(len(Y)))
 
     def loadMNISTData(self, path='/Users/vikram.v/Downloads/mnist.npz'):
         # Use numpy.load() to load the .npz file

@@ -106,8 +106,8 @@ for i in range(len(y_test)):
 [x_train_new, y_train_new, x_test_new, y_test_new] = myNN.loadMNISTData()
 
 myNN.trainUsingGD(x_train_new, y_train_new, nIterations=nIterations, learningRate=lr)
-myNN.trainUsingSGD(x_train_new, y_train_new, nIterations=nIterations, minibatchSize=minibatchSize, learningRate=lr)
-myNN.trainUsingSGD(x_train_new, y_train_new, nIterations=nIterations, minibatchSize=minibatchSize, learningRate=lr, printTestAccuracy=True, testX=x_test_new, testY=y_test_new)
+myNN.trainUsingMinibatchGD(x_train_new, y_train_new, nIterations=nIterations, minibatchSize=minibatchSize, learningRate=lr)
+myNN.trainUsingminibatchGD(x_train_new, y_train_new, nIterations=nIterations, minibatchSize=minibatchSize, learningRate=lr, printTestAccuracy=True, testX=x_test_new, testY=y_test_new)
 
 # Make network
 myNN = MyPyNN([784, 5, 5, 10])
