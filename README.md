@@ -11,7 +11,7 @@ Here, alpha = learning rate of gradient descent, regLambda = regularization para
 from myPyNN import *
 X = [0, 0.5, 1]
 y = [0, 0.5, 1]
-myNN = MyPyNN(1, 1, 1, 1)
+myNN = MyPyNN([1, 1, 1]]
 ```
 Input Layer    : 1-dimensional (Eg: X)
 
@@ -29,7 +29,7 @@ print myNN.predict(0.2)
 ```
 X = [[0,0], [1,1]]
 y = [0, 1]
-myNN = MyPyNN(2, 1, 3, 1, 0.8)
+myNN = MyPyNN([2, 3, 1])
 ```
 Input Layer    : 2-dimensional (Eg: X)
 
@@ -50,7 +50,7 @@ print myNN.predict(X)
 ```
 X = [[2,2,2], [3,3,3], [4,4,4], [5,5,5], [6,6,6], [7,7,7], [8,8,8], [9,9,9], [10,10,10], [11,11,11]]
 y = [.2, .3, .4, .5, .6, .7, .8, .9, 0, .1]
-myNN = MyPyNN(3, 3, [10, 10, 5], 0.9, 0.5)
+myNN = MyPyNN([3, 10, 10, 5, 1])
 ```
 Input Layer    : 3-dimensional (Eg: X)
 
@@ -105,6 +105,8 @@ jupyter nbextension enable --py --sys-prefix widgetsnbextension
 - [Welch Lab's excellent video playlist on neural networks](https://www.youtube.com/playlist?list=PLiaHhY2iBX9hdHaRr6b7XevZtgZRa1PoU)
 
 - [Michael Nielsen's brilliant hands-on interactive tutorial on the awesome power of neural networks as universal approximators](https://neuralnetworksanddeeplearning.com/chap4.html)
+
+- [Excellent overview of gradient descent algorithms](http://sebastianruder.com/optimizing-gradient-descent/)
 
 - [CS321n's iPython tutorial](https://cs231n.github.io/ipython-tutorial/)
 
